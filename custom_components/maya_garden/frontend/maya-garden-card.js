@@ -1,7 +1,8 @@
 class MayaGardenCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
-    if (!this.content) {
+    if (!this._initialized) {
+      this._initialized = true;
       this.innerHTML = `
         <style>
           .mg-card { padding: 16px; font-family: var(--paper-font-body1_-_font-family); }
@@ -38,13 +39,15 @@ class MayaGardenCard extends HTMLElement {
       `;
       this.content = this.querySelector('#mg-zones-container');
 
-      // Click handle via event delegation
       this.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-toggle-entity]');
         if (btn && this._hass) {
           const entityId = btn.dataset.toggleEntity;
-          const service = this._hass.states[entityId]?.state === 'on' ? 'turn_off' : 'turn_on';
-          this._hass.callService('switch', service, { entity_id: entityId });
+          const st = this._hass.states[entityId];
+          if (st) {
+            const service = st.state === 'on' ? 'turn_off' : 'turn_on';
+            this._hass.callService('switch', service, { entity_id: entityId });
+          }
         }
       });
 
@@ -52,10 +55,24 @@ class MayaGardenCard extends HTMLElement {
         const el = e.target;
         if (!this._hass) return;
         if (el.dataset.timeEntity) {
-          this._hass.callService('time', 'set_value', { entity_id: el.dataset.timeEntity, time: el.value + ':00' });
+          const val = el.value.length === 5 ? el.value + ':00' : el.value;
+          this._hass.callService('time', 'set_value', { entity_id: el.dataset.timeEntity, time: val });
         } else if (el.dataset.selectEntity) {
           this._hass.callService('select', 'select_option', { entity_id: el.dataset.selectEntity, option: el.value });
-        } else if (el.dataset.numberEntity) {
+        }
+      });
+
+      this.addEventListener('input', (e) => {
+        const el = e.target;
+        if (el.dataset.numberEntity) {
+          const label = el.parentElement.querySelector('.label');
+          if (label) label.textContent = `Duração: ${el.value} min`;
+        }
+      });
+
+      this.addEventListener('change', (e) => {
+        const el = e.target;
+        if (el.dataset.numberEntity && this._hass) {
           this._hass.callService('number', 'set_value', { entity_id: el.dataset.numberEntity, value: parseFloat(el.value) });
         }
       });
@@ -64,18 +81,35 @@ class MayaGardenCard extends HTMLElement {
     this._updateUI();
   }
 
+  _findEntity(states, patterns) {
+    return Object.keys(states).find(e => patterns.every(p => e.includes(p))) || '';
+  }
+
   _updateUI() {
     const hass = this._hass;
     if (!hass || !this.content) return;
-    
-    // Descoberta dinamica
-    const modeEntities = Object.keys(hass.states).filter(e => 
-      e.startsWith('select.') && (e.includes('modo_zona_') || e.includes('maya_garden_zona_'))
+
+    // Buscar entidades de modo (select que contém modo_zona_)
+    const modeEntities = Object.keys(hass.states).filter(e =>
+      e.startsWith('select.') && e.includes('modo_zona_')
     ).sort();
 
     if (modeEntities.length === 0) {
-      this.content.innerHTML = '<div style="text-align:center; padding:20px">Aguardando entidades...</div>';
+      this.content.innerHTML = '<div style="text-align:center; padding:20px; color: var(--secondary-text-color);">⏳ Aguardando entidades da integração Maya Garden...</div>';
       return;
+    }
+
+    // Status da bomba e chuva
+    const pumpEnt = this._findEntity(hass.states, ['switch.', 'irrigacao', 'interruptor_3']) || 'switch.irrigacao_interruptor_3';
+    const pumpOn = hass.states[pumpEnt]?.state === 'on';
+    
+    // Buscar sensor de chuva dinamicamente
+    const rainEnt = this._findEntity(hass.states, ['binary_sensor.', 'chuva']) || this._findEntity(hass.states, ['binary_sensor.', 'rain']);
+    const rainOn = rainEnt ? hass.states[rainEnt]?.state === 'on' : false;
+
+    const summary = this.querySelector('#mg-status-summary');
+    if (summary) {
+      summary.innerHTML = `<span class="${pumpOn ? 'status-on' : ''}">Bomba: ${pumpOn ? '💧 ON' : '⚫ Standby'}</span> · <span class="${rainOn ? 'status-off' : ''}">Chuva: ${rainOn ? '🌧️ ON' : '☀️ Seco'}</span>`;
     }
 
     let html = '';
@@ -84,53 +118,47 @@ class MayaGardenCard extends HTMLElement {
       if (!match) return;
       const z = match[1];
 
-      // Tenta achar as entidades irmas baseadas nos nomes conhecidos
-      const pumpOn = hass.states['switch.irrigacao_interruptor_3']?.state === 'on';
-      const rainOn = hass.states['binary_sensor.chuva_umidade']?.state === 'on';
-      
-      const summary = this.querySelector('#mg-status-summary');
-      if (summary) {
-        summary.innerHTML = `<span class="${pumpOn?'status-on':''}">Bomba: ${pumpOn?'ON':'Standby'}</span> • <span class="${rainOn?'status-off':''}">Chuva: ${rainOn?'ON':'Seco'}</span>`;
-      }
-
-      const pauseEnt = modeEnt.replace('select.', 'switch.').replace('modo', 'pausa_chuva').replace('modo_', 'pausar_').replace('_modo', '_pausa_chuva');
-      const realPauseEnt = Object.keys(hass.states).find(e => e === pauseEnt || e.includes(`pausar_zona_${z}`)) || pauseEnt;
-      
+      // Buscar pausa por chuva
+      const pauseEnt = this._findEntity(hass.states, ['switch.', `zona_${z}`, 'chuva']) ||
+                        this._findEntity(hass.states, ['switch.', `zona_${z}`, 'pausa']);
       const modeState = hass.states[modeEnt]?.state || 'Desligado';
-      const pauseOn = hass.states[realPauseEnt]?.state === 'on';
+      const pauseOn = pauseEnt ? hass.states[pauseEnt]?.state === 'on' : false;
 
       html += `
         <div class="mg-zone-box">
-          <div class="mg-zone-title">Zona ${z}</div>
+          <div class="mg-zone-title">🌿 Zona ${z}</div>
           <div class="mg-control-grid">
             <div class="mg-schedule-row" style="margin:0">
               <div class="label">Modo</div>
               <select class="mg-select" data-select-entity="${modeEnt}">
-                ${(hass.states[modeEnt]?.attributes?.options || []).map(o => `<option value="${o}" ${o===modeState?'selected':''}>${o}</option>`).join('')}
+                ${(hass.states[modeEnt]?.attributes?.options || ['Desligado', 'Automático', 'Com Chuva']).map(o => `<option value="${o}" ${o === modeState ? 'selected' : ''}>${o}</option>`).join('')}
               </select>
             </div>
             <div class="mg-schedule-row" style="margin:0; display:flex; justify-content:space-between; align-items:center">
               <div class="label">Pausa Chuva</div>
-              <button class="mg-toggle ${pauseOn?'mg-toggle-on':'mg-toggle-off'}" data-toggle-entity="${realPauseEnt}">${pauseOn?'ON':'OFF'}</button>
+              ${pauseEnt ? `<button class="mg-toggle ${pauseOn ? 'mg-toggle-on' : 'mg-toggle-off'}" data-toggle-entity="${pauseEnt}">${pauseOn ? 'ON' : 'OFF'}</button>` : '<span class="label">-</span>'}
             </div>
           </div>
           <div class="label" style="margin:10px 0 5px">Horários de Irrigação</div>
       `;
 
       for (let s = 1; s <= 4; s++) {
-        const activeEnt = Object.keys(hass.states).find(e => e.includes(`zona_${z}_horario_${s}_ativo`)) || '';
-        const timeEnt   = Object.keys(hass.states).find(e => e.startsWith('time.') && e.includes(`zona_${z}_horario_${s}`)) || '';
-        const durEnt    = Object.keys(hass.states).find(e => e.startsWith('number.') && e.includes(`zona_${z}_horario_${s}`)) || '';
+        const activeEnt = this._findEntity(hass.states, [`zona_${z}`, `horario_${s}`, 'ativo']);
+        const timeEnt = this._findEntity(hass.states, ['time.', `zona_${z}`, `horario_${s}`]);
+        const durEnt = this._findEntity(hass.states, ['number.', `zona_${z}`, `horario_${s}`, 'duracao']);
 
-        const active = hass.states[activeEnt]?.state === 'on';
-        const timeVal = hass.states[timeEnt]?.state || "00:00";
-        const durVal = hass.states[durEnt]?.state || 5;
+        const active = activeEnt ? hass.states[activeEnt]?.state === 'on' : false;
+        const timeVal = timeEnt ? hass.states[timeEnt]?.state || '00:00' : '00:00';
+        const durVal = durEnt ? hass.states[durEnt]?.state || 5 : 5;
 
         html += `
           <div class="mg-schedule-row">
-            <div class="mg-schedule-header"><span>Turno ${s}</span><button class="mg-toggle ${active?'mg-toggle-on':'mg-toggle-off'}" data-toggle-entity="${activeEnt}">${active?'ON':'OFF'}</button></div>
+            <div class="mg-schedule-header">
+              <span>Turno ${s}</span>
+              ${activeEnt ? `<button class="mg-toggle ${active ? 'mg-toggle-on' : 'mg-toggle-off'}" data-toggle-entity="${activeEnt}">${active ? 'ON' : 'OFF'}</button>` : '<span class="label">-</span>'}
+            </div>
             <div class="mg-inputs">
-              <div><div class="label">Hora</div><input type="time" class="mg-time-input" value="${String(timeVal).substring(0,5)}" data-time-entity="${timeEnt}"></div>
+              <div><div class="label">Hora</div><input type="time" class="mg-time-input" value="${String(timeVal).substring(0, 5)}" data-time-entity="${timeEnt}"></div>
               <div style="flex-grow:1; margin-left:10px"><div class="label">Duração: ${durVal} min</div><input type="range" class="mg-slider" min="1" max="60" value="${durVal}" data-number-entity="${durEnt}"></div>
             </div>
           </div>
@@ -147,11 +175,10 @@ class MayaGardenCard extends HTMLElement {
 
 customElements.define('maya-garden-card', MayaGardenCard);
 
-// Registro oficial para o seletor de cartoes do Lovelace
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: "maya-garden-card",
-  name: "Maya Garden Super Console",
-  description: "Painel de controle unificado para irrigação inteligente.",
+  name: "Maya Garden",
+  description: "Painel de controle para irrigação inteligente.",
   preview: true
 });
