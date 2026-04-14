@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurar Maya Garden",
+        "description": "Selecione as entidades reais que formam o seu sistema de irrigação.",
+        "data": {
+          "pump_entity": "Bomba Principal",
+          "valve_entities": "Válvulas das Zonas",
+          "rain_sensor": "Sensor de Chuva (Opcional)"
+        }
+      }
+    },
+    "error": {
+      "no_valves": "Você deve selecionar ao menos uma válvula antes de continuar."
+    },
+    "abort": {
+      "already_configured": "O sistema já está configurado. Para gerenciar novos horários abra a aba de opções."
+    }
+  }
+}

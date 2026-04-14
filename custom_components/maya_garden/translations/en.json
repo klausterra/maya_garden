@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure Maya Garden",
+        "description": "Select the entities that compose your irrigation system.",
+        "data": {
+          "pump_entity": "Main Pump (Switch)",
+          "valve_entities": "Valve Zones",
+          "rain_sensor": "Rain Sensor (Optional)"
+        }
+      }
+    },
+    "error": {
+      "no_valves": "You must select at least one valve."
+    },
+    "abort": {
+      "already_configured": "The system is already configured."
+    }
+  }
+}

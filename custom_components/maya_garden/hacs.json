@@ -1,0 +1,9 @@
+{
+  "name": "Maya Garden",
+  "content_builder": "web",
+  "render_readme": true,
+  "filename": "maya_garden.zip",
+  "zip_release": true,
+  "domains": ["maya_garden"],
+  "homeassistant": "2023.6.0"
+}
