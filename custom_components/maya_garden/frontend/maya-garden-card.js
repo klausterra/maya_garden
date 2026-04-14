@@ -9,43 +9,34 @@ class MayaGardenCard extends HTMLElement {
 
           /* ===== HERO HEADER ===== */
           .mg-hero {
-            background: linear-gradient(135deg, #1a3a1a 0%, #2e5d2e 40%, #1b4332 100%);
+            background: transparent;
             padding: 28px 24px 24px;
             text-align: center;
             position: relative;
             overflow: hidden;
           }
-          .mg-hero::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(ellipse at 30% 50%, rgba(76,175,80,0.15) 0%, transparent 60%);
-            pointer-events: none;
-          }
+          .mg-hero::before { display: none; }
           .mg-hero-logo {
-            width: 90px;
-            height: 90px;
+            width: 130px;
+            height: 130px;
             border-radius: 50%;
-            border: 3px solid rgba(255,255,255,0.3);
+            border: 3px solid var(--divider-color);
             object-fit: cover;
-            margin-bottom: 14px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            margin-bottom: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.25);
             position: relative;
           }
           .mg-hero-name {
             font-size: 1.8em;
             font-weight: 800;
-            color: #ffffff;
+            color: var(--primary-text-color);
             letter-spacing: 1px;
             margin-bottom: 6px;
             position: relative;
           }
           .mg-hero-tagline {
             font-size: 0.82em;
-            color: rgba(255,255,255,0.75);
+            color: var(--secondary-text-color);
             font-style: italic;
             margin-bottom: 10px;
             position: relative;
@@ -58,18 +49,18 @@ class MayaGardenCard extends HTMLElement {
             position: relative;
           }
           .mg-hero-sites a {
-            color: #81c784;
+            color: var(--primary-color);
             text-decoration: none;
             font-size: 0.75em;
             font-weight: 600;
             padding: 4px 14px;
-            border: 1px solid rgba(129,199,132,0.3);
+            border: 1px solid var(--divider-color);
             border-radius: 20px;
             transition: all 0.2s;
           }
           .mg-hero-sites a:hover {
-            background: rgba(129,199,132,0.15);
-            border-color: rgba(129,199,132,0.6);
+            background: rgba(76,175,80,0.1);
+            border-color: var(--primary-color);
           }
 
           /* ===== STATUS PANEL ===== */
