@@ -6,38 +6,69 @@ class MayaGardenCard extends HTMLElement {
       this.innerHTML = `
         <style>
           .mg-card { padding: 16px; font-family: var(--paper-font-body1_-_font-family); }
-          .mg-header { display: flex; align-items: center; margin-bottom: 20px; }
-          .mg-logo { width: 48px; height: 48px; margin-right: 12px; border-radius: 50%; border: 2px solid var(--primary-color); display: flex; align-items: center; justify-content: center; background: var(--primary-color); color: white; font-size: 1.5em; font-weight: bold; }
-          .mg-zone-box { background: var(--card-background-color); border-radius: 12px; border: 1px solid var(--divider-color); padding: 12px; margin-bottom: 16px; box-shadow: var(--ha-card-box-shadow); }
-          .mg-zone-title { font-size: 1.1em; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; }
-          .mg-control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-          .mg-schedule-row { background: var(--secondary-background-color); padding: 10px; border-radius: 8px; margin-bottom: 8px; }
-          .mg-schedule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-          .mg-inputs { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-          .mg-toggle { cursor: pointer; padding: 6px 14px; border-radius: 12px; font-size: 0.85em; font-weight: bold; border: none; min-width: 55px; }
-          .mg-toggle-on { background: var(--success-color, #4caf50); color: white; }
-          .mg-toggle-off { background: var(--divider-color, #ccc); color: var(--primary-text-color); }
-          .mg-time-input { background: var(--card-background-color); border: 1px solid var(--divider-color); border-radius: 4px; padding: 4px 6px; color: var(--primary-text-color); font-size: 0.95em; width: 90px; }
-          .mg-slider { flex-grow: 1; accent-color: var(--primary-color); }
-          .mg-select { background: var(--card-background-color); border: 1px solid var(--divider-color); border-radius: 4px; padding: 6px; color: var(--primary-text-color); width: 100%; }
-          .status-on { color: var(--success-color, #4caf50); }
-          .status-off { color: var(--error-color, #f44336); }
-          .label { font-size: 0.8em; color: var(--secondary-text-color); }
+
+          /* Header */
+          .mg-header { display: flex; align-items: center; margin-bottom: 16px; }
+          .mg-logo { width: 52px; height: 52px; margin-right: 14px; border-radius: 50%; border: 3px solid var(--primary-color); display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #2e7d32, #66bb6a); color: white; font-size: 1.6em; }
+          .mg-title { font-size: 1.4em; font-weight: bold; }
+
+          /* Status panel */
+          .mg-status-panel { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+          .mg-status-item { text-align: center; padding: 10px 6px; border-radius: 12px; background: var(--secondary-background-color); }
+          .mg-status-icon { font-size: 1.8em; display: block; margin-bottom: 4px; }
+          .mg-status-label { font-size: 0.7em; color: var(--secondary-text-color); text-transform: uppercase; letter-spacing: 0.5px; }
+          .mg-status-value { font-size: 0.85em; font-weight: bold; margin-top: 2px; }
+          .mg-status-active { background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1)); border: 1px solid rgba(76, 175, 80, 0.3); }
+          .mg-status-alert { background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(255, 152, 0, 0.1)); border: 1px solid rgba(255, 152, 0, 0.3); }
+
+          /* Zone box */
+          .mg-zone-box { background: var(--card-background-color); border-radius: 14px; border: 1px solid var(--divider-color); padding: 14px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+          .mg-zone-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+          .mg-zone-title { font-size: 1.15em; font-weight: bold; }
+          .mg-zone-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75em; font-weight: bold; }
+          .mg-badge-on { background: #4caf50; color: white; animation: mg-pulse 2s infinite; }
+          .mg-badge-off { background: var(--divider-color); color: var(--secondary-text-color); }
+          .mg-badge-rain { background: #ff9800; color: white; }
+
+          @keyframes mg-pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.6; } }
+
+          /* Controls row */
+          .mg-controls { display: flex; gap: 8px; margin-bottom: 12px; }
+          .mg-control-item { flex: 1; padding: 8px; border-radius: 10px; background: var(--secondary-background-color); text-align: center; }
+          .mg-control-label { font-size: 0.7em; color: var(--secondary-text-color); margin-bottom: 4px; }
+
+          /* Schedule rows */
+          .mg-sched { background: var(--secondary-background-color); padding: 10px 12px; border-radius: 10px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+          .mg-sched-num { width: 28px; height: 28px; border-radius: 50%; background: var(--divider-color); display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: bold; flex-shrink: 0; }
+          .mg-sched-num-on { background: #4caf50; color: white; }
+          .mg-sched-body { flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+          .mg-sched-time { background: var(--card-background-color); border: 1px solid var(--divider-color); border-radius: 6px; padding: 4px 6px; color: var(--primary-text-color); font-size: 0.95em; width: 85px; }
+          .mg-sched-dur { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 100px; }
+          .mg-sched-dur-val { font-size: 0.85em; font-weight: bold; min-width: 40px; text-align: center; }
+          .mg-slider { flex: 1; accent-color: var(--primary-color); min-width: 60px; }
+          .mg-btn { cursor: pointer; padding: 5px 12px; border-radius: 8px; font-size: 0.8em; font-weight: bold; border: none; min-width: 42px; }
+          .mg-btn-on { background: #4caf50; color: white; }
+          .mg-btn-off { background: var(--divider-color); color: var(--primary-text-color); }
+          .mg-btn-rain { background: #2196f3; color: white; }
+          .mg-btn-rain-on { background: #ff9800; color: white; }
+
+          .mg-select { background: var(--card-background-color); border: 1px solid var(--divider-color); border-radius: 6px; padding: 6px 8px; color: var(--primary-text-color); width: 100%; font-size: 0.9em; }
         </style>
         <ha-card>
           <div class="mg-card">
             <div class="mg-header">
               <div class="mg-logo">🌱</div>
               <div>
-                <div style="font-size: 1.3em; font-weight: bold;">Maya Garden</div>
-                <div id="mg-status-summary" class="label">Monitorando...</div>
+                <div class="mg-title">Maya Garden</div>
               </div>
             </div>
+            <div id="mg-status-panel" class="mg-status-panel"></div>
             <div id="mg-zones-container"></div>
           </div>
         </ha-card>
       `;
       this.content = this.querySelector('#mg-zones-container');
+      this.statusPanel = this.querySelector('#mg-status-panel');
 
       this.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-toggle-entity]');
@@ -45,122 +76,132 @@ class MayaGardenCard extends HTMLElement {
           const entityId = btn.dataset.toggleEntity;
           const st = this._hass.states[entityId];
           if (st) {
-            const service = st.state === 'on' ? 'turn_off' : 'turn_on';
-            this._hass.callService('switch', service, { entity_id: entityId });
+            this._hass.callService('switch', st.state === 'on' ? 'turn_off' : 'turn_on', { entity_id: entityId });
           }
         }
       });
-
       this.addEventListener('change', (e) => {
         const el = e.target;
         if (!this._hass) return;
         if (el.dataset.timeEntity) {
-          const val = el.value.length === 5 ? el.value + ':00' : el.value;
-          this._hass.callService('time', 'set_value', { entity_id: el.dataset.timeEntity, time: val });
+          this._hass.callService('time', 'set_value', { entity_id: el.dataset.timeEntity, time: el.value + ':00' });
         } else if (el.dataset.selectEntity) {
           this._hass.callService('select', 'select_option', { entity_id: el.dataset.selectEntity, option: el.value });
-        }
-      });
-
-      this.addEventListener('input', (e) => {
-        const el = e.target;
-        if (el.dataset.numberEntity) {
-          const label = el.parentElement.querySelector('.label');
-          if (label) label.textContent = `Duração: ${el.value} min`;
-        }
-      });
-
-      this.addEventListener('change', (e) => {
-        const el = e.target;
-        if (el.dataset.numberEntity && this._hass) {
+        } else if (el.dataset.numberEntity) {
           this._hass.callService('number', 'set_value', { entity_id: el.dataset.numberEntity, value: parseFloat(el.value) });
         }
       });
+      this.addEventListener('input', (e) => {
+        const el = e.target;
+        if (el.dataset.numberEntity) {
+          const lbl = el.closest('.mg-sched-dur')?.querySelector('.mg-sched-dur-val');
+          if (lbl) lbl.textContent = el.value + ' min';
+        }
+      });
     }
-
     this._updateUI();
   }
 
-  _findEntity(states, patterns) {
+  _find(states, patterns) {
     return Object.keys(states).find(e => patterns.every(p => e.includes(p))) || '';
   }
 
   _updateUI() {
-    const hass = this._hass;
-    if (!hass || !this.content) return;
+    const h = this._hass;
+    if (!h || !this.content) return;
 
-    // Buscar entidades de modo (select que contém modo_zona_)
-    const modeEntities = Object.keys(hass.states).filter(e =>
-      e.startsWith('select.') && e.includes('modo_zona_')
-    ).sort();
-
-    if (modeEntities.length === 0) {
-      this.content.innerHTML = '<div style="text-align:center; padding:20px; color: var(--secondary-text-color);">⏳ Aguardando entidades da integração Maya Garden...</div>';
+    const modeEnts = Object.keys(h.states).filter(e => e.startsWith('select.') && e.includes('modo_zona_')).sort();
+    if (!modeEnts.length) {
+      this.content.innerHTML = '<div style="text-align:center;padding:20px;color:var(--secondary-text-color)">Aguardando entidades...</div>';
       return;
     }
 
-    // Status da bomba e chuva
-    const pumpEnt = this._findEntity(hass.states, ['switch.', 'irrigacao', 'interruptor_3']) || 'switch.irrigacao_interruptor_3';
-    const pumpOn = hass.states[pumpEnt]?.state === 'on';
-    
-    // Buscar sensor de chuva dinamicamente
-    const rainEnt = this._findEntity(hass.states, ['binary_sensor.', 'chuva']) || this._findEntity(hass.states, ['binary_sensor.', 'rain']);
-    const rainOn = rainEnt ? hass.states[rainEnt]?.state === 'on' : false;
+    // Global status
+    const pumpEnt = this._find(h.states, ['switch.', 'irrigacao', 'interruptor_3']) || 'switch.irrigacao_interruptor_3';
+    const pumpOn = h.states[pumpEnt]?.state === 'on';
+    const rainEnt = this._find(h.states, ['binary_sensor.', 'chuva']) || this._find(h.states, ['binary_sensor.', 'rain']);
+    const rainOn = rainEnt ? h.states[rainEnt]?.state === 'on' : false;
 
-    const summary = this.querySelector('#mg-status-summary');
-    if (summary) {
-      summary.innerHTML = `<span class="${pumpOn ? 'status-on' : ''}">Bomba: ${pumpOn ? '💧 ON' : '⚫ Standby'}</span> · <span class="${rainOn ? 'status-off' : ''}">Chuva: ${rainOn ? '🌧️ ON' : '☀️ Seco'}</span>`;
-    }
+    // Check which zones are actively irrigating
+    const v1 = this._find(h.states, ['switch.', 'irrigacao', 'interruptor_1']);
+    const v2 = this._find(h.states, ['switch.', 'irrigacao', 'interruptor_2']);
+    const z1on = v1 ? h.states[v1]?.state === 'on' : false;
+    const z2on = v2 ? h.states[v2]?.state === 'on' : false;
+    const irrigating = z1on || z2on;
+    const activeZone = z1on && z2on ? 'Z1 + Z2' : z1on ? 'Zona 1' : z2on ? 'Zona 2' : '-';
+
+    this.statusPanel.innerHTML = `
+      <div class="mg-status-item ${pumpOn ? 'mg-status-active' : ''}">
+        <span class="mg-status-icon">${pumpOn ? '💧' : '⚫'}</span>
+        <div class="mg-status-label">Bomba</div>
+        <div class="mg-status-value" style="color:${pumpOn ? '#4caf50' : 'inherit'}">${pumpOn ? 'Ligada' : 'Desligada'}</div>
+      </div>
+      <div class="mg-status-item ${irrigating ? 'mg-status-active' : ''}">
+        <span class="mg-status-icon">${irrigating ? '🌿' : '⏸️'}</span>
+        <div class="mg-status-label">Irrigação</div>
+        <div class="mg-status-value" style="color:${irrigating ? '#4caf50' : 'inherit'}">${irrigating ? activeZone : 'Parada'}</div>
+      </div>
+      <div class="mg-status-item ${rainOn ? 'mg-status-alert' : ''}">
+        <span class="mg-status-icon">${rainOn ? '🌧️' : '☀️'}</span>
+        <div class="mg-status-label">Clima</div>
+        <div class="mg-status-value" style="color:${rainOn ? '#ff9800' : 'inherit'}">${rainOn ? 'Chovendo' : 'Seco'}</div>
+      </div>
+    `;
 
     let html = '';
-    modeEntities.forEach(modeEnt => {
-      const match = modeEnt.match(/zona_(\d+)/);
-      if (!match) return;
-      const z = match[1];
+    modeEnts.forEach(modeEnt => {
+      const m = modeEnt.match(/zona_(\d+)/);
+      if (!m) return;
+      const z = m[1];
 
-      // Buscar pausa por chuva
-      const pauseEnt = this._findEntity(hass.states, ['switch.', `zona_${z}`, 'chuva']) ||
-                        this._findEntity(hass.states, ['switch.', `zona_${z}`, 'pausa']);
-      const modeState = hass.states[modeEnt]?.state || 'Desligado';
-      const pauseOn = pauseEnt ? hass.states[pauseEnt]?.state === 'on' : false;
+      const pauseEnt = this._find(h.states, ['switch.', `zona_${z}`, 'chuva']) || this._find(h.states, ['switch.', `zona_${z}`, 'pausa']);
+      const modeState = h.states[modeEnt]?.state || 'Desligado';
+      const pauseOn = pauseEnt ? h.states[pauseEnt]?.state === 'on' : false;
+      const valveEnt = this._find(h.states, ['switch.', 'irrigacao', `interruptor_${z}`]);
+      const valveOn = valveEnt ? h.states[valveEnt]?.state === 'on' : false;
+
+      const badgeClass = valveOn ? 'mg-badge-on' : pauseOn ? 'mg-badge-rain' : modeState === 'Desligado' ? 'mg-badge-off' : 'mg-badge-off';
+      const badgeText = valveOn ? '💧 Irrigando' : pauseOn ? '🌧️ Pausada' : modeState === 'Desligado' ? '⛔ Desligada' : '✅ Pronta';
 
       html += `
         <div class="mg-zone-box">
-          <div class="mg-zone-title">🌿 Zona ${z}</div>
-          <div class="mg-control-grid">
-            <div class="mg-schedule-row" style="margin:0">
-              <div class="label">Modo</div>
+          <div class="mg-zone-header">
+            <div class="mg-zone-title">🌿 Zona ${z}</div>
+            <span class="mg-zone-badge ${valveOn ? 'mg-badge-on' : pauseOn ? 'mg-badge-rain' : 'mg-badge-off'}">${badgeText}</span>
+          </div>
+          <div class="mg-controls">
+            <div class="mg-control-item">
+              <div class="mg-control-label">Modo</div>
               <select class="mg-select" data-select-entity="${modeEnt}">
-                ${(hass.states[modeEnt]?.attributes?.options || ['Desligado', 'Automático', 'Com Chuva']).map(o => `<option value="${o}" ${o === modeState ? 'selected' : ''}>${o}</option>`).join('')}
+                ${(h.states[modeEnt]?.attributes?.options || ['Desligado','Automático','Com Chuva']).map(o => `<option value="${o}" ${o===modeState?'selected':''}>${o === 'Desligado' ? '⛔ Desligado' : o === 'Automático' ? '🤖 Automático' : '🌧️ Com Chuva'}</option>`).join('')}
               </select>
             </div>
-            <div class="mg-schedule-row" style="margin:0; display:flex; justify-content:space-between; align-items:center">
-              <div class="label">Pausa Chuva</div>
-              ${pauseEnt ? `<button class="mg-toggle ${pauseOn ? 'mg-toggle-on' : 'mg-toggle-off'}" data-toggle-entity="${pauseEnt}">${pauseOn ? 'ON' : 'OFF'}</button>` : '<span class="label">-</span>'}
+            <div class="mg-control-item" style="flex:0 0 auto">
+              <div class="mg-control-label">Pausa Chuva</div>
+              ${pauseEnt ? `<button class="mg-btn ${pauseOn ? 'mg-btn-rain-on' : 'mg-btn-rain'}" data-toggle-entity="${pauseEnt}">${pauseOn ? '🌧️ SIM' : '☀️ NÃO'}</button>` : '-'}
             </div>
           </div>
-          <div class="label" style="margin:10px 0 5px">Horários de Irrigação</div>
       `;
 
       for (let s = 1; s <= 4; s++) {
-        const activeEnt = this._findEntity(hass.states, [`zona_${z}`, `horario_${s}`, 'ativo']);
-        const timeEnt = this._findEntity(hass.states, ['time.', `zona_${z}`, `horario_${s}`]);
-        const durEnt = this._findEntity(hass.states, ['number.', `zona_${z}`, `horario_${s}`, 'duracao']);
-
-        const active = activeEnt ? hass.states[activeEnt]?.state === 'on' : false;
-        const timeVal = timeEnt ? hass.states[timeEnt]?.state || '00:00' : '00:00';
-        const durVal = durEnt ? hass.states[durEnt]?.state || 5 : 5;
+        const aEnt = this._find(h.states, [`zona_${z}`, `horario_${s}`, 'ativo']);
+        const tEnt = this._find(h.states, ['time.', `zona_${z}`, `horario_${s}`]);
+        const dEnt = this._find(h.states, ['number.', `zona_${z}`, `horario_${s}`, 'duracao']);
+        const on = aEnt ? h.states[aEnt]?.state === 'on' : false;
+        const tv = tEnt ? h.states[tEnt]?.state || '00:00' : '00:00';
+        const dv = dEnt ? h.states[dEnt]?.state || 5 : 5;
 
         html += `
-          <div class="mg-schedule-row">
-            <div class="mg-schedule-header">
-              <span>Turno ${s}</span>
-              ${activeEnt ? `<button class="mg-toggle ${active ? 'mg-toggle-on' : 'mg-toggle-off'}" data-toggle-entity="${activeEnt}">${active ? 'ON' : 'OFF'}</button>` : '<span class="label">-</span>'}
+          <div class="mg-sched">
+            <div class="mg-sched-num ${on ? 'mg-sched-num-on' : ''}">${s}</div>
+            <div class="mg-sched-body">
+              <input type="time" class="mg-sched-time" value="${String(tv).substring(0,5)}" data-time-entity="${tEnt}" ${!on ? 'style="opacity:0.4"' : ''}>
+              <div class="mg-sched-dur">
+                <span class="mg-sched-dur-val">${dv} min</span>
+                <input type="range" class="mg-slider" min="1" max="10" value="${dv}" data-number-entity="${dEnt}" ${!on ? 'style="opacity:0.4"' : ''}>
+              </div>
             </div>
-            <div class="mg-inputs">
-              <div><div class="label">Hora</div><input type="time" class="mg-time-input" value="${String(timeVal).substring(0, 5)}" data-time-entity="${timeEnt}"></div>
-              <div style="flex-grow:1; margin-left:10px"><div class="label">Duração: ${durVal} min</div><input type="range" class="mg-slider" min="1" max="60" value="${durVal}" data-number-entity="${durEnt}"></div>
-            </div>
+            <button class="mg-btn ${on ? 'mg-btn-on' : 'mg-btn-off'}" data-toggle-entity="${aEnt}">${on ? 'ON' : 'OFF'}</button>
           </div>
         `;
       }
@@ -170,15 +211,9 @@ class MayaGardenCard extends HTMLElement {
   }
 
   setConfig(config) { this.config = config; }
-  getCardSize() { return 10; }
+  getCardSize() { return 12; }
 }
 
 customElements.define('maya-garden-card', MayaGardenCard);
-
 window.customCards = window.customCards || [];
-window.customCards.push({
-  type: "maya-garden-card",
-  name: "Maya Garden",
-  description: "Painel de controle para irrigação inteligente.",
-  preview: true
-});
+window.customCards.push({ type: "maya-garden-card", name: "Maya Garden", description: "Controle de irrigacao inteligente.", preview: true });

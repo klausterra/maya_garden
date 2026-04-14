@@ -36,7 +36,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             )
             _LOGGER.info("Caminho estatico registrado: /maya_garden_static -> %s", frontend_path)
             
-            add_extra_js_url(hass, "/maya_garden_static/maya-garden-card.js?v=20260414b")
+            add_extra_js_url(hass, "/maya_garden_static/maya-garden-card.js?v=20260414c")
             
             with open(debug_path, "a") as f:
                 f.write("Frontend registrado com sucesso (v2).\n")
