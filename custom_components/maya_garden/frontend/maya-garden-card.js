@@ -114,6 +114,19 @@ class MayaGardenCard extends HTMLElement {
           .mg-btn-rain-on { background: #ff9800; color: white; }
           .mg-select { background: var(--card-background-color); border: 1px solid var(--divider-color); border-radius: 6px; padding: 6px 8px; color: var(--primary-text-color); width: 100%; font-size: 0.9em; }
 
+          /* ===== LOG DE ATIVIDADE ===== */
+          .mg-log { padding: 0 16px 8px; }
+          .mg-log-title { font-size: 0.85em; font-weight: bold; color: var(--primary-text-color); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+          .mg-log-list { max-height: 180px; overflow-y: auto; }
+          .mg-log-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; margin-bottom: 4px; background: var(--secondary-background-color); font-size: 0.78em; }
+          .mg-log-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+          .mg-log-dot-z1 { background: #4caf50; }
+          .mg-log-dot-z2 { background: #2196f3; }
+          .mg-log-zone { font-weight: bold; min-width: 50px; }
+          .mg-log-time { color: var(--secondary-text-color); min-width: 90px; }
+          .mg-log-dur { color: var(--primary-text-color); margin-left: auto; font-weight: 600; }
+          .mg-log-empty { text-align: center; padding: 12px; color: var(--secondary-text-color); font-size: 0.8em; font-style: italic; }
+
           /* ===== FOOTER ===== */
           .mg-footer { text-align: center; padding: 10px 16px 14px; border-top: 1px solid var(--divider-color); }
           .mg-footer-text { font-size: 0.6em; color: var(--secondary-text-color); opacity: 0.5; letter-spacing: 0.5px; }
@@ -132,6 +145,10 @@ class MayaGardenCard extends HTMLElement {
             <div class="mg-body">
               <div id="mg-status-panel" class="mg-status-panel"></div>
               <div id="mg-zones-container"></div>
+            </div>
+            <div class="mg-log">
+              <div class="mg-log-title">📋 Histórico de Irrigação</div>
+              <div id="mg-log-list" class="mg-log-list"><div class="mg-log-empty">Carregando histórico...</div></div>
             </div>
             <div class="mg-footer">
               <div class="mg-footer-text">MAYA GARDEN · HIPERENGE ENGENHARIA · IRRIGAÇÃO INTELIGENTE</div>
@@ -164,8 +181,95 @@ class MayaGardenCard extends HTMLElement {
           if (lbl) lbl.textContent = el.value + ' min';
         }
       });
+      // Fetch history on init and every 5 min
+      this._fetchHistory();
+      this._historyInterval = setInterval(() => this._fetchHistory(), 300000);
     }
     this._updateUI();
+  }
+
+  async _fetchHistory() {
+    if (!this._hass) return;
+    try {
+      const now = new Date();
+      const start = new Date(now.getTime() - 48 * 3600 * 1000); // 48h
+      const startISO = start.toISOString();
+      const endISO = now.toISOString();
+      const v1 = this._find(this._hass.states, ['switch.', 'irrigacao', 'interruptor_1']) || 'switch.irrigacao_interruptor_1';
+      const v2 = this._find(this._hass.states, ['switch.', 'irrigacao', 'interruptor_2']) || 'switch.irrigacao_interruptor_2';
+      const entities = `${v1},${v2}`;
+      const url = `history/period/${startISO}?end_time=${endISO}&filter_entity_id=${entities}&minimal_response&no_attributes`;
+      const result = await this._hass.callApi('GET', url);
+      this._processHistory(result, v1, v2);
+    } catch (e) {
+      const logEl = this.querySelector('#mg-log-list');
+      if (logEl) logEl.innerHTML = '<div class="mg-log-empty">Histórico indisponível</div>';
+    }
+  }
+
+  _processHistory(result, v1Id, v2Id) {
+    const logEl = this.querySelector('#mg-log-list');
+    if (!logEl || !result) return;
+
+    const events = [];
+    const valveMap = { [v1Id]: 'Zona 1', [v2Id]: 'Zona 2' };
+    const dotMap = { [v1Id]: 'mg-log-dot-z1', [v2Id]: 'mg-log-dot-z2' };
+
+    result.forEach(entityHistory => {
+      if (!entityHistory || !entityHistory.length) return;
+      const entityId = entityHistory[0]?.entity_id;
+      const zoneName = valveMap[entityId] || 'Zona ?';
+      const dotClass = dotMap[entityId] || 'mg-log-dot-z1';
+      let onTime = null;
+
+      entityHistory.forEach(state => {
+        if (state.state === 'on' && !onTime) {
+          onTime = new Date(state.last_changed);
+        } else if (state.state === 'off' && onTime) {
+          const offTime = new Date(state.last_changed);
+          const durMin = Math.round((offTime - onTime) / 60000);
+          if (durMin > 0 && durMin < 120) {
+            events.push({
+              zone: zoneName,
+              dotClass: dotClass,
+              start: onTime,
+              duration: durMin,
+            });
+          }
+          onTime = null;
+        }
+      });
+      // Still on
+      if (onTime) {
+        const durMin = Math.round((new Date() - onTime) / 60000);
+        events.push({ zone: zoneName, dotClass: dotClass, start: onTime, duration: durMin, active: true });
+      }
+    });
+
+    events.sort((a, b) => b.start - a.start);
+
+    if (!events.length) {
+      logEl.innerHTML = '<div class="mg-log-empty">Nenhuma irrigação nas últimas 48h</div>';
+      return;
+    }
+
+    const today = new Date();
+    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+    const fmt = (d) => {
+      const isToday = d.toDateString() === today.toDateString();
+      const isYest = d.toDateString() === yesterday.toDateString();
+      const prefix = isToday ? 'Hoje' : isYest ? 'Ontem' : d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      return `${prefix} ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    };
+
+    logEl.innerHTML = events.slice(0, 15).map(e => `
+      <div class="mg-log-item">
+        <div class="mg-log-dot ${e.dotClass}"></div>
+        <div class="mg-log-zone">${e.zone}</div>
+        <div class="mg-log-time">${fmt(e.start)}</div>
+        <div class="mg-log-dur">${e.active ? '⏱️ Em curso' : e.duration + ' min'}</div>
+      </div>
+    `).join('');
   }
 
   _find(states, patterns) {
