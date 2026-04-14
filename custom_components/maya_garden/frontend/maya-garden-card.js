@@ -17,8 +17,8 @@ class MayaGardenCard extends HTMLElement {
           }
           .mg-hero::before { display: none; }
           .mg-hero-logo {
-            width: 130px;
-            height: 130px;
+            width: 180px;
+            height: 180px;
             border-radius: 50%;
             border: 3px solid var(--divider-color);
             object-fit: cover;
