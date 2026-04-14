@@ -7,10 +7,15 @@ class MayaGardenCard extends HTMLElement {
         <style>
           .mg-card { padding: 16px; font-family: var(--paper-font-body1_-_font-family); }
 
-          /* Header */
-          .mg-header { display: flex; align-items: center; margin-bottom: 16px; }
-          .mg-logo { width: 52px; height: 52px; margin-right: 14px; border-radius: 50%; border: 3px solid var(--primary-color); display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #2e7d32, #66bb6a); color: white; font-size: 1.6em; }
-          .mg-title { font-size: 1.4em; font-weight: bold; }
+          /* Header com logo */
+          .mg-header { display: flex; align-items: center; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--divider-color); }
+          .mg-logo-img { width: 56px; height: 56px; margin-right: 14px; border-radius: 50%; border: 2px solid var(--primary-color); object-fit: cover; }
+          .mg-header-text { flex: 1; }
+          .mg-title { font-size: 1.4em; font-weight: bold; color: var(--primary-text-color); }
+          .mg-tagline { font-size: 0.72em; color: var(--secondary-text-color); margin-top: 2px; font-style: italic; }
+          .mg-sites { font-size: 0.65em; color: var(--primary-color); margin-top: 3px; opacity: 0.8; }
+          .mg-sites a { color: var(--primary-color); text-decoration: none; }
+          .mg-sites a:hover { text-decoration: underline; }
 
           /* Status panel */
           .mg-status-panel { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 18px; }
@@ -53,17 +58,28 @@ class MayaGardenCard extends HTMLElement {
           .mg-btn-rain-on { background: #ff9800; color: white; }
 
           .mg-select { background: var(--card-background-color); border: 1px solid var(--divider-color); border-radius: 6px; padding: 6px 8px; color: var(--primary-text-color); width: 100%; font-size: 0.9em; }
+
+          /* Footer */
+          .mg-footer { text-align: center; padding-top: 10px; border-top: 1px solid var(--divider-color); margin-top: 8px; }
+          .mg-footer-text { font-size: 0.6em; color: var(--secondary-text-color); opacity: 0.6; }
         </style>
         <ha-card>
           <div class="mg-card">
             <div class="mg-header">
-              <div class="mg-logo">🌱</div>
-              <div>
+              <img src="/maya_garden_static/logo.jpg" class="mg-logo-img" alt="Maya Garden" onerror="this.outerHTML='<div style=&quot;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#2e7d32,#66bb6a);display:flex;align-items:center;justify-content:center;color:white;font-size:1.6em;margin-right:14px;flex-shrink:0&quot;>🌱</div>'">
+              <div class="mg-header-text">
                 <div class="mg-title">Maya Garden</div>
+                <div class="mg-tagline">O primeiro sistema de irrigação com inteligência artificial do mercado</div>
+                <div class="mg-sites">
+                  <a href="https://www.hiperenge.com.br" target="_blank">hiperenge.com.br</a> · <a href="https://www.mayahome.ia.br" target="_blank">mayahome.ia.br</a>
+                </div>
               </div>
             </div>
             <div id="mg-status-panel" class="mg-status-panel"></div>
             <div id="mg-zones-container"></div>
+            <div class="mg-footer">
+              <div class="mg-footer-text">Maya Garden · Hiperenge Engenharia · Irrigação Inteligente com IA</div>
+            </div>
           </div>
         </ha-card>
       `;
@@ -112,7 +128,7 @@ class MayaGardenCard extends HTMLElement {
 
     const modeEnts = Object.keys(h.states).filter(e => e.startsWith('select.') && e.includes('modo_zona_')).sort();
     if (!modeEnts.length) {
-      this.content.innerHTML = '<div style="text-align:center;padding:20px;color:var(--secondary-text-color)">Aguardando entidades...</div>';
+      this.content.innerHTML = '<div style="text-align:center;padding:20px;color:var(--secondary-text-color)">⏳ Aguardando entidades...</div>';
       return;
     }
 
@@ -122,13 +138,12 @@ class MayaGardenCard extends HTMLElement {
     const rainEnt = this._find(h.states, ['binary_sensor.', 'chuva']) || this._find(h.states, ['binary_sensor.', 'rain']);
     const rainOn = rainEnt ? h.states[rainEnt]?.state === 'on' : false;
 
-    // Check which zones are actively irrigating
     const v1 = this._find(h.states, ['switch.', 'irrigacao', 'interruptor_1']);
     const v2 = this._find(h.states, ['switch.', 'irrigacao', 'interruptor_2']);
     const z1on = v1 ? h.states[v1]?.state === 'on' : false;
     const z2on = v2 ? h.states[v2]?.state === 'on' : false;
     const irrigating = z1on || z2on;
-    const activeZone = z1on && z2on ? 'Z1 + Z2' : z1on ? 'Zona 1' : z2on ? 'Zona 2' : '-';
+    const activeZone = z1on && z2on ? 'Zona 1 + 2' : z1on ? 'Zona 1' : z2on ? 'Zona 2' : '-';
 
     this.statusPanel.innerHTML = `
       <div class="mg-status-item ${pumpOn ? 'mg-status-active' : ''}">
@@ -160,7 +175,6 @@ class MayaGardenCard extends HTMLElement {
       const valveEnt = this._find(h.states, ['switch.', 'irrigacao', `interruptor_${z}`]);
       const valveOn = valveEnt ? h.states[valveEnt]?.state === 'on' : false;
 
-      const badgeClass = valveOn ? 'mg-badge-on' : pauseOn ? 'mg-badge-rain' : modeState === 'Desligado' ? 'mg-badge-off' : 'mg-badge-off';
       const badgeText = valveOn ? '💧 Irrigando' : pauseOn ? '🌧️ Pausada' : modeState === 'Desligado' ? '⛔ Desligada' : '✅ Pronta';
 
       html += `
@@ -216,4 +230,4 @@ class MayaGardenCard extends HTMLElement {
 
 customElements.define('maya-garden-card', MayaGardenCard);
 window.customCards = window.customCards || [];
-window.customCards.push({ type: "maya-garden-card", name: "Maya Garden", description: "Controle de irrigacao inteligente.", preview: true });
+window.customCards.push({ type: "maya-garden-card", name: "Maya Garden", description: "O primeiro sistema de irrigação com inteligência artificial do mercado.", preview: true });
