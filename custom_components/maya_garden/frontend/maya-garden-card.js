@@ -5,44 +5,99 @@ class MayaGardenCard extends HTMLElement {
       this._initialized = true;
       this.innerHTML = `
         <style>
-          .mg-card { padding: 16px; font-family: var(--paper-font-body1_-_font-family); }
+          .mg-card { font-family: var(--paper-font-body1_-_font-family); overflow: hidden; }
 
-          /* Header com logo */
-          .mg-header { display: flex; align-items: center; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--divider-color); }
-          .mg-logo-img { width: 56px; height: 56px; margin-right: 14px; border-radius: 50%; border: 2px solid var(--primary-color); object-fit: cover; }
-          .mg-header-text { flex: 1; }
-          .mg-title { font-size: 1.4em; font-weight: bold; color: var(--primary-text-color); }
-          .mg-tagline { font-size: 0.72em; color: var(--secondary-text-color); margin-top: 2px; font-style: italic; }
-          .mg-sites { font-size: 0.65em; color: var(--primary-color); margin-top: 3px; opacity: 0.8; }
-          .mg-sites a { color: var(--primary-color); text-decoration: none; }
-          .mg-sites a:hover { text-decoration: underline; }
+          /* ===== HERO HEADER ===== */
+          .mg-hero {
+            background: linear-gradient(135deg, #1a3a1a 0%, #2e5d2e 40%, #1b4332 100%);
+            padding: 28px 24px 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+          }
+          .mg-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 30% 50%, rgba(76,175,80,0.15) 0%, transparent 60%);
+            pointer-events: none;
+          }
+          .mg-hero-logo {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.3);
+            object-fit: cover;
+            margin-bottom: 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            position: relative;
+          }
+          .mg-hero-name {
+            font-size: 1.8em;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            position: relative;
+          }
+          .mg-hero-tagline {
+            font-size: 0.82em;
+            color: rgba(255,255,255,0.75);
+            font-style: italic;
+            margin-bottom: 10px;
+            position: relative;
+            line-height: 1.4;
+          }
+          .mg-hero-sites {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            position: relative;
+          }
+          .mg-hero-sites a {
+            color: #81c784;
+            text-decoration: none;
+            font-size: 0.75em;
+            font-weight: 600;
+            padding: 4px 14px;
+            border: 1px solid rgba(129,199,132,0.3);
+            border-radius: 20px;
+            transition: all 0.2s;
+          }
+          .mg-hero-sites a:hover {
+            background: rgba(129,199,132,0.15);
+            border-color: rgba(129,199,132,0.6);
+          }
 
-          /* Status panel */
+          /* ===== STATUS PANEL ===== */
+          .mg-body { padding: 16px; }
           .mg-status-panel { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 18px; }
-          .mg-status-item { text-align: center; padding: 10px 6px; border-radius: 12px; background: var(--secondary-background-color); }
-          .mg-status-icon { font-size: 1.8em; display: block; margin-bottom: 4px; }
+          .mg-status-item { text-align: center; padding: 12px 6px; border-radius: 12px; background: var(--secondary-background-color); transition: all 0.3s; }
+          .mg-status-icon { font-size: 2em; display: block; margin-bottom: 4px; }
           .mg-status-label { font-size: 0.7em; color: var(--secondary-text-color); text-transform: uppercase; letter-spacing: 0.5px; }
           .mg-status-value { font-size: 0.85em; font-weight: bold; margin-top: 2px; }
-          .mg-status-active { background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.1)); border: 1px solid rgba(76, 175, 80, 0.3); }
-          .mg-status-alert { background: linear-gradient(135deg, rgba(255, 152, 0, 0.2), rgba(255, 152, 0, 0.1)); border: 1px solid rgba(255, 152, 0, 0.3); }
+          .mg-status-active { background: linear-gradient(135deg, rgba(76,175,80,0.2), rgba(76,175,80,0.08)); border: 1px solid rgba(76,175,80,0.3); }
+          .mg-status-alert { background: linear-gradient(135deg, rgba(255,152,0,0.2), rgba(255,152,0,0.08)); border: 1px solid rgba(255,152,0,0.3); }
 
-          /* Zone box */
-          .mg-zone-box { background: var(--card-background-color); border-radius: 14px; border: 1px solid var(--divider-color); padding: 14px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+          /* ===== ZONE BOX ===== */
+          .mg-zone-box { background: var(--card-background-color); border-radius: 14px; border: 1px solid var(--divider-color); padding: 14px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
           .mg-zone-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
           .mg-zone-title { font-size: 1.15em; font-weight: bold; }
-          .mg-zone-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75em; font-weight: bold; }
+          .mg-zone-badge { padding: 5px 14px; border-radius: 20px; font-size: 0.75em; font-weight: bold; }
           .mg-badge-on { background: #4caf50; color: white; animation: mg-pulse 2s infinite; }
           .mg-badge-off { background: var(--divider-color); color: var(--secondary-text-color); }
           .mg-badge-rain { background: #ff9800; color: white; }
-
           @keyframes mg-pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.6; } }
 
-          /* Controls row */
+          /* ===== CONTROLS ===== */
           .mg-controls { display: flex; gap: 8px; margin-bottom: 12px; }
           .mg-control-item { flex: 1; padding: 8px; border-radius: 10px; background: var(--secondary-background-color); text-align: center; }
           .mg-control-label { font-size: 0.7em; color: var(--secondary-text-color); margin-bottom: 4px; }
 
-          /* Schedule rows */
+          /* ===== SCHEDULE ===== */
           .mg-sched { background: var(--secondary-background-color); padding: 10px 12px; border-radius: 10px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
           .mg-sched-num { width: 28px; height: 28px; border-radius: 50%; background: var(--divider-color); display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: bold; flex-shrink: 0; }
           .mg-sched-num-on { background: #4caf50; color: white; }
@@ -50,35 +105,36 @@ class MayaGardenCard extends HTMLElement {
           .mg-sched-time { background: var(--card-background-color); border: 1px solid var(--divider-color); border-radius: 6px; padding: 4px 6px; color: var(--primary-text-color); font-size: 0.95em; width: 85px; }
           .mg-sched-dur { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 100px; }
           .mg-sched-dur-val { font-size: 0.85em; font-weight: bold; min-width: 40px; text-align: center; }
-          .mg-slider { flex: 1; accent-color: var(--primary-color); min-width: 60px; }
-          .mg-btn { cursor: pointer; padding: 5px 12px; border-radius: 8px; font-size: 0.8em; font-weight: bold; border: none; min-width: 42px; }
+          .mg-slider { flex: 1; accent-color: #4caf50; min-width: 60px; }
+          .mg-btn { cursor: pointer; padding: 5px 12px; border-radius: 8px; font-size: 0.8em; font-weight: bold; border: none; min-width: 42px; transition: all 0.2s; }
+          .mg-btn:active { transform: scale(0.95); }
           .mg-btn-on { background: #4caf50; color: white; }
           .mg-btn-off { background: var(--divider-color); color: var(--primary-text-color); }
           .mg-btn-rain { background: #2196f3; color: white; }
           .mg-btn-rain-on { background: #ff9800; color: white; }
-
           .mg-select { background: var(--card-background-color); border: 1px solid var(--divider-color); border-radius: 6px; padding: 6px 8px; color: var(--primary-text-color); width: 100%; font-size: 0.9em; }
 
-          /* Footer */
-          .mg-footer { text-align: center; padding-top: 10px; border-top: 1px solid var(--divider-color); margin-top: 8px; }
-          .mg-footer-text { font-size: 0.6em; color: var(--secondary-text-color); opacity: 0.6; }
+          /* ===== FOOTER ===== */
+          .mg-footer { text-align: center; padding: 10px 16px 14px; border-top: 1px solid var(--divider-color); }
+          .mg-footer-text { font-size: 0.6em; color: var(--secondary-text-color); opacity: 0.5; letter-spacing: 0.5px; }
         </style>
         <ha-card>
           <div class="mg-card">
-            <div class="mg-header">
-              <img src="/maya_garden_static/logo.jpg" class="mg-logo-img" alt="Maya Garden" onerror="this.outerHTML='<div style=&quot;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#2e7d32,#66bb6a);display:flex;align-items:center;justify-content:center;color:white;font-size:1.6em;margin-right:14px;flex-shrink:0&quot;>🌱</div>'">
-              <div class="mg-header-text">
-                <div class="mg-title">Maya Garden</div>
-                <div class="mg-tagline">O primeiro sistema de irrigação com inteligência artificial do mercado</div>
-                <div class="mg-sites">
-                  <a href="https://www.hiperenge.com.br" target="_blank">hiperenge.com.br</a> · <a href="https://www.mayahome.ia.br" target="_blank">mayahome.ia.br</a>
-                </div>
+            <div class="mg-hero">
+              <img src="/maya_garden_static/logo.jpg" class="mg-hero-logo" alt="Maya Garden" onerror="this.style.display='none'">
+              <div class="mg-hero-name">Maya Garden</div>
+              <div class="mg-hero-tagline">O primeiro sistema de irrigação com<br>inteligência artificial do mercado</div>
+              <div class="mg-hero-sites">
+                <a href="https://www.hiperenge.com.br" target="_blank">hiperenge.com.br</a>
+                <a href="https://www.mayahome.ia.br" target="_blank">mayahome.ia.br</a>
               </div>
             </div>
-            <div id="mg-status-panel" class="mg-status-panel"></div>
-            <div id="mg-zones-container"></div>
+            <div class="mg-body">
+              <div id="mg-status-panel" class="mg-status-panel"></div>
+              <div id="mg-zones-container"></div>
+            </div>
             <div class="mg-footer">
-              <div class="mg-footer-text">Maya Garden · Hiperenge Engenharia · Irrigação Inteligente com IA</div>
+              <div class="mg-footer-text">MAYA GARDEN · HIPERENGE ENGENHARIA · IRRIGAÇÃO INTELIGENTE</div>
             </div>
           </div>
         </ha-card>
@@ -91,21 +147,15 @@ class MayaGardenCard extends HTMLElement {
         if (btn && this._hass) {
           const entityId = btn.dataset.toggleEntity;
           const st = this._hass.states[entityId];
-          if (st) {
-            this._hass.callService('switch', st.state === 'on' ? 'turn_off' : 'turn_on', { entity_id: entityId });
-          }
+          if (st) this._hass.callService('switch', st.state === 'on' ? 'turn_off' : 'turn_on', { entity_id: entityId });
         }
       });
       this.addEventListener('change', (e) => {
         const el = e.target;
         if (!this._hass) return;
-        if (el.dataset.timeEntity) {
-          this._hass.callService('time', 'set_value', { entity_id: el.dataset.timeEntity, time: el.value + ':00' });
-        } else if (el.dataset.selectEntity) {
-          this._hass.callService('select', 'select_option', { entity_id: el.dataset.selectEntity, option: el.value });
-        } else if (el.dataset.numberEntity) {
-          this._hass.callService('number', 'set_value', { entity_id: el.dataset.numberEntity, value: parseFloat(el.value) });
-        }
+        if (el.dataset.timeEntity) this._hass.callService('time', 'set_value', { entity_id: el.dataset.timeEntity, time: el.value + ':00' });
+        else if (el.dataset.selectEntity) this._hass.callService('select', 'select_option', { entity_id: el.dataset.selectEntity, option: el.value });
+        else if (el.dataset.numberEntity) this._hass.callService('number', 'set_value', { entity_id: el.dataset.numberEntity, value: parseFloat(el.value) });
       });
       this.addEventListener('input', (e) => {
         const el = e.target;
@@ -132,12 +182,10 @@ class MayaGardenCard extends HTMLElement {
       return;
     }
 
-    // Global status
     const pumpEnt = this._find(h.states, ['switch.', 'irrigacao', 'interruptor_3']) || 'switch.irrigacao_interruptor_3';
     const pumpOn = h.states[pumpEnt]?.state === 'on';
     const rainEnt = this._find(h.states, ['binary_sensor.', 'chuva']) || this._find(h.states, ['binary_sensor.', 'rain']);
     const rainOn = rainEnt ? h.states[rainEnt]?.state === 'on' : false;
-
     const v1 = this._find(h.states, ['switch.', 'irrigacao', 'interruptor_1']);
     const v2 = this._find(h.states, ['switch.', 'irrigacao', 'interruptor_2']);
     const z1on = v1 ? h.states[v1]?.state === 'on' : false;
@@ -168,13 +216,11 @@ class MayaGardenCard extends HTMLElement {
       const m = modeEnt.match(/zona_(\d+)/);
       if (!m) return;
       const z = m[1];
-
       const pauseEnt = this._find(h.states, ['switch.', `zona_${z}`, 'chuva']) || this._find(h.states, ['switch.', `zona_${z}`, 'pausa']);
       const modeState = h.states[modeEnt]?.state || 'Desligado';
       const pauseOn = pauseEnt ? h.states[pauseEnt]?.state === 'on' : false;
       const valveEnt = this._find(h.states, ['switch.', 'irrigacao', `interruptor_${z}`]);
       const valveOn = valveEnt ? h.states[valveEnt]?.state === 'on' : false;
-
       const badgeText = valveOn ? '💧 Irrigando' : pauseOn ? '🌧️ Pausada' : modeState === 'Desligado' ? '⛔ Desligada' : '✅ Pronta';
 
       html += `
@@ -196,7 +242,6 @@ class MayaGardenCard extends HTMLElement {
             </div>
           </div>
       `;
-
       for (let s = 1; s <= 4; s++) {
         const aEnt = this._find(h.states, [`zona_${z}`, `horario_${s}`, 'ativo']);
         const tEnt = this._find(h.states, ['time.', `zona_${z}`, `horario_${s}`]);
@@ -204,7 +249,6 @@ class MayaGardenCard extends HTMLElement {
         const on = aEnt ? h.states[aEnt]?.state === 'on' : false;
         const tv = tEnt ? h.states[tEnt]?.state || '00:00' : '00:00';
         const dv = dEnt ? h.states[dEnt]?.state || 5 : 5;
-
         html += `
           <div class="mg-sched">
             <div class="mg-sched-num ${on ? 'mg-sched-num-on' : ''}">${s}</div>
@@ -225,7 +269,7 @@ class MayaGardenCard extends HTMLElement {
   }
 
   setConfig(config) { this.config = config; }
-  getCardSize() { return 12; }
+  getCardSize() { return 14; }
 }
 
 customElements.define('maya-garden-card', MayaGardenCard);
